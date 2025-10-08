@@ -3,6 +3,8 @@ import torch
 import os
 import json
 from tqdm import tqdm
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
 from ferretui.constants import IMAGE_TOKEN_INDEX, DEFAULT_IMAGE_TOKEN, DEFAULT_IM_START_TOKEN, DEFAULT_IM_END_TOKEN, DEFAULT_REGION_FEA_TOKEN, VOCAB_IMAGE_W, VOCAB_IMAGE_H
 from ferretui.conversation import conv_templates, SeparatorStyle
@@ -219,6 +221,23 @@ def eval_model(args):
                                     "label": label,
                                    }) + "\n")
         ans_file.flush()
+        
+        if 'box_x1y1x2y2' in ann and ann['box_x1y1x2y2']:
+            box = ann['box_x1y1x2y2'][0][0]
+            x1, y1, x2, y2 = box
+
+            fig, ax = plt.subplots(1, figsize=(8, 8))
+            ax.imshow(img)
+            rect = patches.Rectangle((x1, y1), x2 - x1, y2 - y1,
+                                     linewidth=2, edgecolor='red', facecolor='none')
+            ax.add_patch(rect)
+            ax.text(x1, y1 - 10, outputs, color='red', fontsize=12)
+            plt.axis('off')
+
+            boxed_path = f"/kaggle/working/boxed_{ann['id']}.png"
+            fig.savefig(boxed_path)
+            print(f"Saved boxed image to {boxed_path}")
+            
     ans_file.close()
 
 
